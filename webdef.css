@@ -1,12 +1,25 @@
+button {
+	white-space: nowrap;
+}
+
 .controls {
-	margin: 5px;
+	display: inline-grid;
+	grid-template-columns: repeat(2, min-content) 1fr;
+	grid-template-rows: repeat(4, min-content);
+	grid-gap: 5px;
+}
+
+#error-span {
+	grid-area: 1 / -2 / -1 / -1 ;
+	align-self: center;
 }
 
 .visuals {
 	display: grid;
+	margin-top: 5px;
 }
 
-.bg{
+.bg {
 	grid-area: 1 / 1 / 2 / 2;
 	background-color: grey;
 	z-index: 0;

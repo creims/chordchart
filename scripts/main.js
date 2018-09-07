@@ -1,31 +1,38 @@
 import Chart from './chart.js';
 
 // Constants
+const tuningInput = document.getElementById('tuning-input');
 const offsetInput = document.getElementById('offset-input');
 const patternInput = document.getElementById('pattern-input');
-const patternErrSpan = document.getElementById('pattern-error');
+const errorSpan = document.getElementById('error-span');
+const highlightRoot = document.getElementById('highlight-root');
+const moreFrets = document.getElementById('more-frets');
+
+const tuningFour = '555';
+const tuningSix = '55545';
 
 // Globals
 let chart;
-let offset = 0;
 
 // Functions
 // Set the error string
 function setError(str = '') {
-	patternErrSpan.innerText = str;
+	errorSpan.innerText = str;
 }
 
 // Parse a pattern and update the chord chart to display it
 function setPattern() {
 	let s = patternInput.value;
-	if(!/^\d+$/.test(s)) {
+	if(!/^[1-9AaBb]+$/.test(s)) {
 		setError('Invalid interval pattern. 0-9 or \'A\'/\'B\' for 10/11 only.');
 		return;
 	}
 	
 	let intervals = s.split('').map(function(n) {
-		if(n == '0') {
+		if(n == 'A' || n == 'a') {
 			return 10;
+		} else if(n == 'B' || n == 'b') {
+			return 11;
 		} else {
 			return Number.parseInt(n);
 		}
@@ -49,14 +56,28 @@ function setPattern() {
 	}
 	
 	intervals.push(12 - total);
-	chart.drawNotes(intervals, offset);
+	chart.setIntervals(intervals);
 }
 
-function updateNumStrings(numStrings) {
-	chart.setStrings(numStrings);
-	setPattern();
+// Update string tuning and redraw chart
+function updateTuning(tuning) {
+	if(!/^\d+$/.test(tuning)) {
+		setError('Invalid tuning pattern. 0-9 only.');
+		return;
+	}
+	
+	tuning = tuning.split('').map(e => Number.parseInt(e));
+	chart.setTuning(tuning);
+	setError();
 }
 
+// For buttons for common tunings
+function loadTuningPreset(preset) {
+	updateTuning(preset);
+	tuningInput.value = preset;
+}
+
+// Update the note offset
 function updateOffset() {
 	const o = Number.parseInt(offsetInput.value, 10);
 	if(Number.isNaN(o) || o < 0 || o > 11) {
@@ -64,18 +85,30 @@ function updateOffset() {
 		return;
 	}
 	
-	offset = o;
-	setPattern();
+	chart.setOffset(o);
+	setError();
 }
 
 // Initialize
 window.onload = function() {
+	// Reset options
+	tuningInput.value = tuningFour;
+	offsetInput.value = '0';
+	patternInput.value = '221222';
+	highlightRoot.checked = true;
+	moreFrets.checked = false;
+	
+	// Initialize chart
 	const bg = document.getElementById('bg-canvas');
 	const fg = document.getElementById('fg-canvas');
 	chart = new Chart(bg, fg);
 	
-	document.getElementById('4strings').onclick = () => { updateNumStrings(4); };
-	document.getElementById('6strings').onclick = () => { updateNumStrings(6); };
+	// Set up event handlers
+	document.getElementById('4strings').onclick = () => { loadTuningPreset(tuningFour); };
+	document.getElementById('6strings').onclick = () => { loadTuningPreset(tuningSix); };
+	document.getElementById('tuning-btn').onclick = () => { updateTuning(tuningInput.value); };
 	document.getElementById('offset-btn').onclick = updateOffset;
 	document.getElementById('pattern-btn').onclick = setPattern;
+	highlightRoot.onchange = () => { chart.toggleHighlight(); };
+	moreFrets.onchange = () => { chart.toggleFrets(); };
 }
