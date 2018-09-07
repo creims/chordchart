@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="webdef.css" rel="stylesheet" type="text/css">
+    <title>Chord Chart</title>
+</head>
+<body>
+	<div class="standin">
+		<button id="4strings">4 Strings</button>
+		<button id="6strings">6 Strings</button>
+		<input type="text" id="offset-input">
+		<button id="offset-btn">Set Offset</button>
+	</div>
+	
+	<div class="controls" id="controls">
+		<input type="text" id="pattern-input"/>
+		<button id="pattern-btn">Set Pattern</button>
+		<span id="pattern-error"></span>
+	</div>
+	
+	<div class="visuals" id="visuals">
+		<canvas class="bg" id="bg-canvas"></canvas>
+		<canvas class="fg" id="fg-canvas"></canvas>
+	</div>
+
+    <script type="module" src="scripts/main.js"></script>
+</body>
+</html>

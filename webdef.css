@@ -1,0 +1,19 @@
+.controls {
+	margin: 5px;
+}
+
+.visuals {
+	display: grid;
+}
+
+.bg{
+	grid-area: 1 / 1 / 2 / 2;
+	background-color: grey;
+	z-index: 0;
+} 
+
+.fg {
+	grid-area: 1 / 1 / 2 / 2;
+	background-color: transparent;
+	z-index: 1;
+}
