@@ -15,21 +15,51 @@
 		<button id="offset-btn">Set Note Offset</button>
 		<input type="text" id="pattern-input" value="221222"/>
 		<button id="pattern-btn">Set Pattern</button>
+		
 		<div class="checkbox-div">
-			<input type="checkbox" id="highlight-root" checked>
-			<label for="highlight-root">Highlight Root</label>
+			<input type="checkbox" id="color-notes" checked>
+			<label for="color-notes">Color Notes</label>
 		</div>
+		
 		<div class="checkbox-div">
-			<input type="checkbox" id="more-frets" unchecked>
 			<label for="more-frets">More Frets</label>
+			<input type="checkbox" id="more-frets" unchecked>
 		</div>
-		<span id="error-span"></span>
+		
+		<div class="colors">
+			<label for="colors0">Root:</label>
+			<input type="text" class="colorinput" id="colors0">
+			<label for="colors1">First:</label>
+			<input type="text" class="colorinput" id="colors1">
+			<label for="colors2">Second:</label>
+			<input type="text" class="colorinput" id="colors2">
+			<label for="colors3">Third:</label>
+			<input type="text" class="colorinput" id="colors3">
+			<label for="colors4">Fourth:</label>
+			<input type="text" class="colorinput" id="colors4">
+			<label for="colors5">Fifth:</label>
+			<input type="text" class="colorinput" id="colors5">
+			<label for="colors6">Sixth:</label>
+			<input type="text" class="colorinput" id="colors6">
+			<label for="colors7">Seventh:</label>
+			<input type="text" class="colorinput" id="colors7">
+			<label for="colors8">Eighth:</label>
+			<input type="text" class="colorinput" id="colors8">
+			<label for="colors9">Ninth:</label>
+			<input type="text" class="colorinput" id="colors9">
+			<label for="colors10">Tenth:</label>
+			<input type="text" class="colorinput" id="colors10">
+			<label for="colors11">Eleventh:</label>
+			<input type="text" class="colorinput" id="colors11">
+		</div>
 	</div>
 	
 	<div class="visuals" id="visuals">
 		<canvas class="bg" id="bg-canvas"></canvas>
 		<canvas class="fg" id="fg-canvas"></canvas>
 	</div>
+	
+	<span id="error-span"></span>
 
     <script type="module" src="scripts/main.js"></script>
 </body>

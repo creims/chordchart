@@ -5,11 +5,13 @@ const tuningInput = document.getElementById('tuning-input');
 const offsetInput = document.getElementById('offset-input');
 const patternInput = document.getElementById('pattern-input');
 const errorSpan = document.getElementById('error-span');
-const highlightRoot = document.getElementById('highlight-root');
+const colorNotes = document.getElementById('color-notes');
 const moreFrets = document.getElementById('more-frets');
 
 const tuningFour = '555';
 const tuningSix = '55545';
+const defaultColors = ['red', 'blue', 'green', 'yellow', '#bfef45', '#911eb4', 
+					   '#ffd8b1', 'orange', 'cyan', 'magenta', 'beige', '#469990'];
 
 // Globals
 let chart;
@@ -95,13 +97,13 @@ window.onload = function() {
 	tuningInput.value = tuningFour;
 	offsetInput.value = '0';
 	patternInput.value = '221222';
-	highlightRoot.checked = true;
+	colorNotes.checked = true;
 	moreFrets.checked = false;
 	
 	// Initialize chart
 	const bg = document.getElementById('bg-canvas');
 	const fg = document.getElementById('fg-canvas');
-	chart = new Chart(bg, fg);
+	chart = new Chart(bg, fg, defaultColors);
 	
 	// Set up event handlers
 	document.getElementById('4strings').onclick = () => { loadTuningPreset(tuningFour); };
@@ -109,6 +111,16 @@ window.onload = function() {
 	document.getElementById('tuning-btn').onclick = () => { updateTuning(tuningInput.value); };
 	document.getElementById('offset-btn').onclick = updateOffset;
 	document.getElementById('pattern-btn').onclick = setPattern;
-	highlightRoot.onchange = () => { chart.toggleHighlight(); };
+	colorNotes.onchange = () => { chart.toggleColors(); };
 	moreFrets.onchange = () => { chart.toggleFrets(); };
+	
+	// Color input handlers
+	for(let i = 0; i < 12; i++) {
+		const e = document.getElementById('colors' + i);
+		e.onchange = () => {
+			chart.setColor(i, e.value);
+		};
+		
+		e.value = defaultColors[i];
+	}
 }

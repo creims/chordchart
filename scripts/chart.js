@@ -1,9 +1,17 @@
 // Consts
+const defaultNoteColor = 'blue';
+
 const lineHeight = 40;
 const lineWidth = lineHeight;
-const margin = 10;
-const radius = Math.round(lineHeight * 0.3);
-const vertOffset = radius + 5;
+const horizontalMargin = 10;
+const verticalMargin = 5;
+
+const fontSize = 28;
+const fretLabelX = horizontalMargin + lineWidth / 2;
+
+const noteRadius = Math.round(lineHeight * 0.3);
+const fretTop = fontSize + noteRadius + verticalMargin * 2;
+
 const twopi = Math.PI * 2;
 
 // Helpers
@@ -18,45 +26,68 @@ function clock(n, c) {
 }
 
 // Constructor
-function Chart(bgCanvas, fgCanvas) {
+function Chart(bgCanvas, fgCanvas, colors) {
 	this.bgCanvas = bgCanvas;
-	this.fgCanvas = fgCanvas;
 	this.bgCtx = bgCanvas.getContext('2d');
+	this.bgCtx.font = '48px serif';
+	
+	
+	this.fgCanvas = fgCanvas;
 	this.fgCtx = fgCanvas.getContext('2d');
-	this.numFrets = 12;
+	
+	this.numFrets = 13;
 	this.offset = 0;
-	this.highlight = true;
-	this.intervals = [2, 2, 1, 2, 2, 2, 1]; // Major scale by default
+	this.colorNotes = true;
+	this.colors = colors;
+	this.notes = [true, false, true, false, true, true, false, true, false, true, false, true, true]; // Major scale by default
+	
 	this.setTuning([5, 5, 5]); // Bass by default
 }
 
 // Resize canvas and draw chart background
 Chart.prototype.drawBG = function() {
 	// Resize canvases
-	let height = lineHeight * (this.numStrings - 1) + vertOffset * 2;
-	let width = lineWidth * this.numFrets + 2 * margin;
+	let height = lineHeight * (this.numStrings - 1) + fretTop + noteRadius + verticalMargin;
+	let width = lineWidth * this.numFrets + 2 * horizontalMargin;
+	
 	this.bgCanvas.height = height;
 	this.bgCanvas.width = width;
 	this.fgCanvas.height = height;
 	this.fgCanvas.width = width;
+
+	// Draw labels
+	this.bgCtx.font = fontSize + 'px serif';
+	this.bgCtx.textAlign = 'center';
+	this.bgCtx.textBaseline = 'top';
+	
+	let label = 0;
+	let labelX = fretLabelX;
+	for(let i = 0; i < this.numFrets; i++) {
+		this.bgCtx.fillText(label.toString(), labelX, verticalMargin);
+		label++;
+		labelX += lineWidth;
+		if(label == 13) {
+			label = 1;
+		}
+	}
 	
 	// Draw grid
 	this.bgCtx.beginPath();
 	
 	// Draw strings
-	let y = vertOffset;
-	const endX = width - margin;
+	let y = fretTop;
+	const endX = width - horizontalMargin;
 	for(let i = 0; i < this.numStrings; i++) {
-		this.bgCtx.moveTo(margin, y);
+		this.bgCtx.moveTo(horizontalMargin, y);
 		this.bgCtx.lineTo(endX, y);
 		y += lineHeight;
 	}
 	
 	// Draw fret lines
-	let x = margin;
-	const endY = height - vertOffset;
+	let x = horizontalMargin;
+	const endY = height - verticalMargin - noteRadius;
 	for(let i = 0; i < this.numFrets + 1; i++) {
-		this.bgCtx.moveTo(x, vertOffset);
+		this.bgCtx.moveTo(x, fretTop);
 		this.bgCtx.lineTo(x, endY);
 		x += lineWidth;
 	}
@@ -81,30 +112,40 @@ Chart.prototype.setOffset = function(offset) {
 
 // Draw a single note on the foreground canvas
 Chart.prototype.drawNote = function(fret, string, color) {
-	const x = (fret + 0.5) * lineWidth + margin;
-	const y = string * lineHeight + vertOffset;
+	const x = (fret + 0.5) * lineWidth + horizontalMargin;
+	const y = string * lineHeight + fretTop;
 	
 	this.fgCtx.fillStyle = color;
+	this.fgCtx.strokeStyle = 'black';
 	this.fgCtx.beginPath();
-	this.fgCtx.arc(x, y, radius, 0, twopi);
+	this.fgCtx.arc(x, y, noteRadius, 0, twopi);
 	this.fgCtx.fill();
+	this.fgCtx.stroke();
 };
 
 Chart.prototype.setIntervals = function(intervals) {
-	this.intervals = intervals;
+	let notes = new Array(12).fill(false);
+	
+	let idx = 0;
+	for(let i of intervals) {
+		idx = clock(idx + i, 12);
+		notes[idx] = true;
+	}
+	
+	this.notes = notes;
 	this.drawNotes();
 };
 
-Chart.prototype.toggleHighlight = function() {
-	this.highlight = !this.highlight;
+Chart.prototype.toggleColors = function() {
+	this.colorNotes = !this.colorNotes;
 	this.drawNotes();
 };
 
 Chart.prototype.toggleFrets = function() {
-	if(this.numFrets == 12) {
-		this.numFrets = 24;
+	if(this.numFrets == 13) {
+		this.numFrets = 25;
 	} else {
-		this.numFrets = 12;
+		this.numFrets = 13;
 	}
 	
 	this.drawBG();
@@ -114,38 +155,42 @@ Chart.prototype.toggleFrets = function() {
 Chart.prototype.drawNotes = function() {
 	// Clear the chart
 	this.fgCtx.clearRect(0, 0, this.fgCanvas.width, this.fgCanvas.height);
-	
 	const tuneIter = this.tuning[Symbol.iterator]();
-	let fret;
 	let currTune;
 	let startFret = this.offset;
+	let fret;
+	
+	// Draw notes from bottom string up
 	for(let string = this.numStrings - 1; string >= 0; string--) {
 		fret = startFret;
-		
-		let fretsSpanned = 0;
-		for(let i = 0; fretsSpanned < this.numFrets; i++) {
-			// Wrap interval index if we have to
-			if(i == this.intervals.length) {
-				i = 0;
+		// Draw the note if it's in the scale
+		for(let i = 0; i < this.numFrets; i++) {
+			if(this.notes[fret] == true) {
+				let color;
+				if(this.colorNotes) {
+					color = this.colors[fret];
+				} else {
+					color = defaultNoteColor;
+				}
+				
+				this.drawNote(i, string, color);
 			}
 			
-			// Draw the corresponding note
-			let color;
-			if(i == 0 && this.highlight) {
-				color = 'red';
-			} else {
-				color = 'blue';
-			}
-			this.drawNote(fret, string, color);
-			fret = clock(fret + this.intervals[i], this.numFrets);
-			fretsSpanned += this.intervals[i];
+			fret = clock(fret + 1, 12);
 		}
 		
+		// Subtract the tuning value from the start fret
 		const currTune = tuneIter.next(); 
 		if(!currTune.done) {
-			startFret = clock(startFret - currTune.value, this.numFrets);
+			startFret = clock(startFret + currTune.value, 12);
 		}
 	}
+};
+
+// Set colors
+Chart.prototype.setColor = function(index, color) {
+	this.colors[index] = color;
+	this.drawNotes();
 };
 
 export default Chart;
