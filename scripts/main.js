@@ -1,4 +1,6 @@
 import Chart from './chart.js';
+import Keyboard from './keyboard.js';
+import { clock } from './utils.js';
 
 // Constants
 const tuningInput = document.getElementById('tuning-input');
@@ -15,6 +17,11 @@ const defaultColors = ['red', 'blue', 'green', 'yellow', '#bfef45', '#911eb4',
 
 // Globals
 let chart;
+let keyboard;
+
+let intervals = [2, 2, 1, 2, 2, 2, 1];
+let guitarOffset = 0;
+let keyboardOffset = 7;
 
 // Functions
 // Set the error string
@@ -30,7 +37,7 @@ function setPattern() {
 		return;
 	}
 	
-	let intervals = s.split('').map(function(n) {
+	intervals = s.split('').map(function(n) {
 		if(n == 'A' || n == 'a') {
 			return 10;
 		} else if(n == 'B' || n == 'b') {
@@ -57,8 +64,7 @@ function setPattern() {
 		setError();
 	}
 	
-	intervals.push(12 - total);
-	chart.setIntervals(intervals);
+	updateVisuals();
 }
 
 // Update string tuning and redraw chart
@@ -79,7 +85,7 @@ function loadTuningPreset(preset) {
 	tuningInput.value = preset;
 }
 
-// Update the note offset
+// Update the keyboard note offset
 function updateOffset() {
 	const o = Number.parseInt(offsetInput.value, 10);
 	if(Number.isNaN(o) || o < 0 || o > 11) {
@@ -87,8 +93,15 @@ function updateOffset() {
 		return;
 	}
 	
-	chart.setOffset(o);
+	guitarOffset = o;
+	keyboardOffset = clock(o - 5, 12);
+	updateVisuals();
 	setError();
+}
+
+function updateVisuals() {
+	chart.setPattern(guitarOffset, intervals);
+	keyboard.setPattern(keyboardOffset, intervals);
 }
 
 // Initialize
@@ -100,10 +113,14 @@ window.onload = function() {
 	colorNotes.checked = true;
 	moreFrets.checked = false;
 	
-	// Initialize chart
-	const bg = document.getElementById('bg-canvas');
-	const fg = document.getElementById('fg-canvas');
-	chart = new Chart(bg, fg, defaultColors);
+	// Initialize charts
+	const gbg = document.getElementById('guitar-bg-canvas');
+	const gfg = document.getElementById('guitar-fg-canvas');
+	chart = new Chart(gbg, gfg, defaultColors);
+	
+	const kbg = document.getElementById('keyboard-bg-canvas');
+	const kfg = document.getElementById('keyboard-fg-canvas');
+	keyboard = new Keyboard(kbg, kfg);
 	
 	// Set up event handlers
 	document.getElementById('4strings').onclick = () => { loadTuningPreset(tuningFour); };
@@ -123,4 +140,6 @@ window.onload = function() {
 		
 		e.value = defaultColors[i];
 	}
+	
+	updateVisuals();
 }

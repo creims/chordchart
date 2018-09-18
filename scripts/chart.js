@@ -1,3 +1,5 @@
+import { clock } from './utils.js';
+
 // Consts
 const defaultNoteColor = 'blue';
 
@@ -14,17 +16,6 @@ const fretTop = fontSize + noteRadius + verticalMargin * 2;
 
 const twopi = Math.PI * 2;
 
-// Helpers
-// Converts an integer n to clock c (positive integer modulo math)
-// Returns NaN if n or c are not both integers or if c is not > 0
-function clock(n, c) {
-	if(!Number.isInteger(n) || !Number.isInteger(c) || c < 1) {
-		return NaN;
-	}
-	n = n % c;
-	return n < 0 ? n + c : n;
-}
-
 // Constructor
 function Chart(bgCanvas, fgCanvas, colors) {
 	this.bgCanvas = bgCanvas;
@@ -39,7 +30,7 @@ function Chart(bgCanvas, fgCanvas, colors) {
 	this.offset = 0;
 	this.colorNotes = true;
 	this.colors = colors;
-	this.notes = [true, false, true, false, true, true, false, true, false, true, false, true, true]; // Major scale by default
+	this.notes = [true, false, true, false, true, true, false, true, false, true, false, true]; // Major scale by default
 	
 	this.setTuning([5, 5, 5]); // Bass by default
 }
@@ -105,11 +96,6 @@ Chart.prototype.setTuning = function(tuning) {
 	this.drawNotes();
 };
 
-Chart.prototype.setOffset = function(offset) {
-	this.offset = offset;
-	this.drawNotes();
-};
-
 // Draw a single note on the foreground canvas
 Chart.prototype.drawNote = function(fret, string, color) {
 	const x = (fret + 0.5) * lineWidth + horizontalMargin;
@@ -123,12 +109,15 @@ Chart.prototype.drawNote = function(fret, string, color) {
 	this.fgCtx.stroke();
 };
 
-Chart.prototype.setIntervals = function(intervals) {
+Chart.prototype.setPattern = function(offset, intervals) {
+	this.offset = offset;
+	
 	let notes = new Array(12).fill(false);
 	
+	notes[0] = true;
 	let idx = 0;
-	for(let i of intervals) {
-		idx = clock(idx + i, 12);
+	for(let i = 0; i < intervals.length - 1; i++) {
+		idx += intervals[i];
 		notes[idx] = true;
 	}
 	
@@ -162,9 +151,10 @@ Chart.prototype.drawNotes = function() {
 	
 	// Draw notes from bottom string up
 	for(let string = this.numStrings - 1; string >= 0; string--) {
-		fret = startFret;
 		// Draw the note if it's in the scale
 		for(let i = 0; i < this.numFrets; i++) {
+			// The fret we're concerned with is offset from the start fret
+			fret = clock(i - startFret, 12);
 			if(this.notes[fret] == true) {
 				let color;
 				if(this.colorNotes) {
@@ -175,14 +165,12 @@ Chart.prototype.drawNotes = function() {
 				
 				this.drawNote(i, string, color);
 			}
-			
-			fret = clock(fret + 1, 12);
 		}
 		
 		// Subtract the tuning value from the start fret
 		const currTune = tuneIter.next(); 
 		if(!currTune.done) {
-			startFret = clock(startFret + currTune.value, 12);
+			startFret = clock(startFret - currTune.value, 12);
 		}
 	}
 };
