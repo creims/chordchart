@@ -50,17 +50,21 @@ function setPattern() {
 	let total = 0;
 	for(i = 0; i < intervals.length; i++) {
 		total += intervals[i];
-		if(total > 11) {
+		if(total >= 12) {
 			break;
 		}
 	}
 	
-	if(total > 11) {
+	if(total > 12) { // Truncate to an octave
 		total -= intervals[i];
+		intervals.push(12 - total);
 		intervals = intervals.slice(0, i);
 		setError('Pattern exceeded an octave; truncated to ' 
 			+ (intervals.length + 1) + ' notes.');
-	} else {
+	} else if(total < 12) { // Finish the octave
+		intervals.push(12 - total);
+		setError();
+	} else { // Octave is perfectly complete
 		setError();
 	}
 	
@@ -109,7 +113,7 @@ window.onload = function() {
 	// Reset options
 	tuningInput.value = tuningFour;
 	offsetInput.value = '0';
-	patternInput.value = '221222';
+	patternInput.value = '2212221';
 	colorNotes.checked = true;
 	moreFrets.checked = false;
 	

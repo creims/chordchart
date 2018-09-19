@@ -84,15 +84,16 @@ Keyboard.prototype.draw = function() {
 // Given an offset and a scale's interval pattern, highlight every note on the scale
 // For example, C major is an offset of 5 with an interval of (2, 2, 1, 2, 2, 2, 1)
 Keyboard.prototype.setPattern = function(offset, intervals) {
+	const lastIndex = intervals.length;
 	let note = offset;
-	let i = intervals.length - 1;
+	let i = lastIndex - 1;
 	
 	let keysToPress = [];
 		
 	while(note - intervals[i] >= 0) {
 		note -= intervals[i];
 		keysToPress.push(note);
-		i = clock(i - 1, intervals.length);
+		i = clock(i - 1, lastIndex);
 	}
 	
 	note = offset;
@@ -100,7 +101,7 @@ Keyboard.prototype.setPattern = function(offset, intervals) {
 	while(note < 88) {
 		keysToPress.push(note);
 		note += intervals[i];
-		i = clock(i + 1, intervals.length);
+		i = clock(i + 1, lastIndex);
 	}
 	this.clearNotes();
 	this.keysDown(...keysToPress);
