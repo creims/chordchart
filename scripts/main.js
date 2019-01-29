@@ -13,6 +13,7 @@ const moreFrets = document.getElementById('more-frets');
 const saveLoadBtn = document.getElementById('save-load-btn');
 const saveLoadTextArea = document.getElementById('save-load-textarea');
 const saveLoadMenu = document.getElementById('save-load-menu');
+const closeBtn = document.getElementById('close-btn');
 
 const tuningFour = '555';
 const tuningSix = '55545';
@@ -39,6 +40,7 @@ const loadFuncs = {
 			}
 			
 			e.value = colors[k];
+			updateColor(Number.parseInt(k), e.value);
 		}
 		
 		updateVisuals();
@@ -168,6 +170,12 @@ function updateOffset() {
 	options['noteOffset'] = offsetInput.value;
 }
 
+// Update a note color setting
+function updateColor(interval, color) {
+	chart.setColor(interval, color);
+	options['colors']['' + interval] = color;
+}
+
 function updateVisuals() {
 	chart.setPattern(guitarOffset, intervals);
 	keyboard.setPattern(keyboardOffset, intervals);
@@ -213,10 +221,7 @@ window.onload = function() {
 	// Color input handlers
 	for(let i = 0; i < 12; i++) {
 		const e = document.getElementById('colors' + i);
-		e.onchange = () => {
-			chart.setColor(i, e.value);
-			options['colors']['' + i] = e.value;
-		};
+		e.onchange = () => { updateColor(i, e.value) };
 	}
 	
 	// Save/load handlers
@@ -230,14 +235,14 @@ window.onload = function() {
 	document.getElementById('load-btn').onclick = () => {
 		let newOpts = JSON.parse(saveLoadTextArea.value);
 		loadOptions(newOpts);
-		document.getElementById('close-btn').onclick();
+		closeBtn.onclick();
 	};
 	document.getElementById('copy-btn').onclick = () => {
 		saveLoadTextArea.select();
 		document.execCommand("copy");
 		setError('Load code copied to clipboard.');
 	};
-	document.getElementById('close-btn').onclick = () => {
+	closeBtn.onclick = () => {
 		disableElement(saveLoadTextArea);
 		disableElement(saveLoadMenu);
 		
