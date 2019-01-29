@@ -10,12 +10,61 @@ const errorSpan = document.getElementById('error-span');
 const colorNotes = document.getElementById('color-notes');
 const moreFrets = document.getElementById('more-frets');
 
+const saveLoadBtn = document.getElementById('save-load-btn');
+const saveLoadTextArea = document.getElementById('save-load-textarea');
+const saveLoadMenu = document.getElementById('save-load-menu');
+
 const tuningFour = '555';
 const tuningSix = '55545';
-const defaultColors = ['red', 'blue', 'green', 'yellow', '#bfef45', '#911eb4', 
-					   '#ffd8b1', 'orange', 'cyan', 'magenta', 'beige', '#469990'];
+
+const loadFuncs = {
+	"tuning": function(tuning) {
+		tuningInput.value = tuning;
+		updateTuning(tuning);
+	},
+	"noteOffset": function(offset) {
+		offsetInput.value = offset;
+		updateOffset(offset);
+	},
+	"pattern": function(pattern) {
+		patternInput.value = pattern;
+		updatePattern();
+	},
+	"colors": function(colors) {
+		for(let k of Object.keys(colors)) {
+			const e = document.getElementById('colors' + k);
+			if(!e) {
+				setError('Invalid color key: ' + k);
+				continue;
+			}
+			
+			e.value = colors[k];
+		}
+		
+		updateVisuals();
+	},
+	"colorNotes": function(bool) {
+		colorNotes.checked = bool;
+		chart.setColorNotes(bool);
+	},
+	"moreFrets": function(bool) {
+		moreFrets.checked = bool;
+		chart.setMoreFrets(bool);
+	}
+};
 
 // Globals
+let options = {
+	"tuning": '555',
+	"noteOffset": '0',
+	"pattern": '2212221',
+	"colors": {
+		'0':'#000000', '1':'#e00000', '2':'#e06000', '3':'#e0b000', '4':'#e0e000', '5':'#a0e000',
+		'6':'#00e000', '7':'#00d0b0', '8':'#00a0f0', '9':'#0060f0', '10':'#6000f0', '11':'#c000e0'
+	},
+	"colorNotes": true,
+	"moreFrets": false
+};
 let chart;
 let keyboard;
 
@@ -24,13 +73,25 @@ let guitarOffset = 0;
 let keyboardOffset = 7;
 
 // Functions
+// Load options from an options object
+function loadOptions(opts) {
+	for(let key of Object.keys(opts)) {
+		if(!loadFuncs[key]) {
+			setError('Unknown option: ' + key);
+			continue;
+		}
+		
+		(loadFuncs[key])(opts[key]);
+	}
+}
+
 // Set the error string
 function setError(str = '') {
 	errorSpan.innerText = str;
 }
 
 // Parse a pattern and update the chord chart to display it
-function setPattern() {
+function updatePattern() {
 	let s = patternInput.value;
 	if(!/^[1-9AaBb]+$/.test(s)) {
 		setError('Invalid interval pattern. 0-9 or \'A\'/\'B\' for 10/11 only.');
@@ -50,15 +111,19 @@ function setPattern() {
 	let total = 0;
 	for(i = 0; i < intervals.length; i++) {
 		total += intervals[i];
-		if(total >= 12) {
+		if(total > 12) {
 			break;
 		}
 	}
 	
 	if(total > 12) { // Truncate to an octave
 		total -= intervals[i];
-		intervals.push(12 - total);
 		intervals = intervals.slice(0, i);
+		
+		if(total < 12) {
+			intervals.push(12 - total);
+		}
+		
 		setError('Pattern exceeded an octave; truncated to ' 
 			+ (intervals.length + 1) + ' notes.');
 	} else if(total < 12) { // Finish the octave
@@ -67,6 +132,10 @@ function setPattern() {
 	} else { // Octave is perfectly complete
 		setError();
 	}
+	
+	let patternString = intervals.reduce((str, curr) => str + curr, '');
+	patternInput.value = patternString;
+	options['pattern'] = patternString;
 	
 	updateVisuals();
 }
@@ -81,12 +150,7 @@ function updateTuning(tuning) {
 	tuning = tuning.split('').map(e => Number.parseInt(e));
 	chart.setTuning(tuning);
 	setError();
-}
-
-// For buttons for common tunings
-function loadTuningPreset(preset) {
-	updateTuning(preset);
-	tuningInput.value = preset;
+	options['tuning'] = tuningInput.value;
 }
 
 // Update the keyboard note offset
@@ -101,6 +165,7 @@ function updateOffset() {
 	keyboardOffset = clock(o - 5, 12);
 	updateVisuals();
 	setError();
+	options['noteOffset'] = offsetInput.value;
 }
 
 function updateVisuals() {
@@ -108,42 +173,77 @@ function updateVisuals() {
 	keyboard.setPattern(keyboardOffset, intervals);
 }
 
+function enableElement(e) {
+	e.style.zIndex = '2';
+	e.style.display = 'block';
+}
+
+function disableElement(e) {
+	e.style.zIndex = '-2';
+	e.style.display = 'none';
+}
+
 // Initialize
-window.onload = function() {
-	// Reset options
-	tuningInput.value = tuningFour;
-	offsetInput.value = '0';
-	patternInput.value = '2212221';
-	colorNotes.checked = true;
-	moreFrets.checked = false;
-	
+window.onload = function() {	
 	// Initialize charts
 	const gbg = document.getElementById('guitar-bg-canvas');
 	const gfg = document.getElementById('guitar-fg-canvas');
-	chart = new Chart(gbg, gfg, defaultColors);
+	chart = new Chart(gbg, gfg);
 	
 	const kbg = document.getElementById('keyboard-bg-canvas');
 	const kfg = document.getElementById('keyboard-fg-canvas');
 	keyboard = new Keyboard(kbg, kfg);
 	
 	// Set up event handlers
-	document.getElementById('4strings').onclick = () => { loadTuningPreset(tuningFour); };
-	document.getElementById('6strings').onclick = () => { loadTuningPreset(tuningSix); };
+	document.getElementById('4strings').onclick = () => { loadFuncs['tuning'](tuningFour); };
+	document.getElementById('6strings').onclick = () => { loadFuncs['tuning'](tuningSix); };
 	document.getElementById('tuning-btn').onclick = () => { updateTuning(tuningInput.value); };
 	document.getElementById('offset-btn').onclick = updateOffset;
-	document.getElementById('pattern-btn').onclick = setPattern;
-	colorNotes.onchange = () => { chart.toggleColors(); };
-	moreFrets.onchange = () => { chart.toggleFrets(); };
+	document.getElementById('pattern-btn').onclick = updatePattern;
+	colorNotes.onchange = () => {
+		chart.setColorNotes(colorNotes.checked);
+		options['colorNotes'] = colorNotes.checked;
+	};
+	moreFrets.onchange = () => {
+		chart.setMoreFrets(moreFrets.checked);
+		options['moreFrets'] = moreFrets.checked;
+	};
+	
 	
 	// Color input handlers
 	for(let i = 0; i < 12; i++) {
 		const e = document.getElementById('colors' + i);
 		e.onchange = () => {
 			chart.setColor(i, e.value);
+			options['colors']['' + i] = e.value;
 		};
-		
-		e.value = defaultColors[i];
 	}
 	
-	updateVisuals();
+	// Save/load handlers
+	saveLoadBtn.onclick = () => {
+		saveLoadTextArea.value = JSON.stringify(options, null, 2);
+		disableElement(saveLoadBtn);
+		
+		enableElement(saveLoadTextArea);
+		enableElement(saveLoadMenu);
+	};
+	document.getElementById('load-btn').onclick = () => {
+		let newOpts = JSON.parse(saveLoadTextArea.value);
+		loadOptions(newOpts);
+		document.getElementById('close-btn').onclick();
+	};
+	document.getElementById('copy-btn').onclick = () => {
+		saveLoadTextArea.select();
+		document.execCommand("copy");
+		setError('Load code copied to clipboard.');
+	};
+	document.getElementById('close-btn').onclick = () => {
+		disableElement(saveLoadTextArea);
+		disableElement(saveLoadMenu);
+		
+		enableElement(saveLoadBtn);
+	};
+	
+	// Initialize default options
+	loadOptions(options);
 }

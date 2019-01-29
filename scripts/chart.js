@@ -2,6 +2,8 @@ import { clock } from './utils.js';
 
 // Consts
 const defaultNoteColor = 'blue';
+const defaultColors = ['#000000', '#e00000', '#e06000', '#e0b000', '#e0e000', '#a0e000',
+					   '#00e000', '#00d0b0', '#00a0f0', '#0060f0', '#6000f0', '#c000e0'];
 
 const lineHeight = 40;
 const lineWidth = lineHeight;
@@ -17,7 +19,7 @@ const fretTop = fontSize + noteRadius + verticalMargin * 2;
 const twopi = Math.PI * 2;
 
 // Constructor
-function Chart(bgCanvas, fgCanvas, colors) {
+function Chart(bgCanvas, fgCanvas) {
 	this.bgCanvas = bgCanvas;
 	this.bgCtx = bgCanvas.getContext('2d');
 	this.bgCtx.font = '48px serif';
@@ -29,7 +31,7 @@ function Chart(bgCanvas, fgCanvas, colors) {
 	this.numFrets = 13;
 	this.offset = 0;
 	this.colorNotes = true;
-	this.colors = colors;
+	this.colors = defaultColors;
 	this.notes = [true, false, true, false, true, true, false, true, false, true, false, true]; // Major scale by default
 	
 	this.setTuning([5, 5, 5]); // Bass by default
@@ -125,13 +127,13 @@ Chart.prototype.setPattern = function(offset, intervals) {
 	this.drawNotes();
 };
 
-Chart.prototype.toggleColors = function() {
-	this.colorNotes = !this.colorNotes;
+Chart.prototype.setColorNotes = function(bool) {
+	this.colorNotes = bool;
 	this.drawNotes();
 };
 
-Chart.prototype.toggleFrets = function() {
-	if(this.numFrets == 13) {
+Chart.prototype.setMoreFrets = function(bool) {
+	if(bool) {
 		this.numFrets = 25;
 	} else {
 		this.numFrets = 13;
